@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Калькулятор стоимости на сайт производителя — демо</title>
+<meta name="description" content="Демонстрационный калькулятор стоимости для сайта производителя: клиент собирает конфигурацию, видит цену и оставляет заявку вместе с расчётом.">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1a1d23; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#2563eb; --accent-soft:#eff4ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 64px}
+  h1{font-size:28px;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 28px}
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+  @media(max-width:800px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .field{margin-bottom:22px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-weight:600;margin-bottom:8px;font-size:14px}
+  .val{float:right;font-weight:400;color:var(--accent)}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opt{border:1px solid var(--line);background:#fff;border-radius:9px;
+       padding:9px 14px;cursor:pointer;font-size:14px;transition:.15s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .total{position:sticky;top:24px}
+  .price{font-size:34px;font-weight:700;margin:4px 0 2px}
+  .hint{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .rows{border-top:1px solid var(--line);padding-top:14px;margin-bottom:20px}
+  .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;color:var(--muted)}
+  .row b{color:var(--ink);font-weight:600}
+  input[type=text],input[type=tel]{width:100%;padding:11px 13px;border:1px solid var(--line);
+       border-radius:9px;font-size:15px;margin-bottom:10px;font-family:inherit}
+  input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  button{width:100%;padding:13px;background:var(--accent);color:#fff;border:0;
+       border-radius:9px;font-size:15px;font-weight:600;cursor:pointer}
+  button:hover{background:#1d4ed8}
+  button:disabled{background:#93a5c4;cursor:default}
+  .ok{display:none;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;
+      padding:14px;border-radius:9px;font-size:14px;margin-top:12px}
+  .err{display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;
+      padding:14px;border-radius:9px;font-size:14px;margin-top:12px}
+  .note{margin-top:26px;padding:14px 16px;background:#fffbeb;border:1px solid #fde68a;
+        border-radius:10px;font-size:13px;color:#78350f}
+  /* Ловушка для ботов: поле скрыто от человека, но заполняется автосабмитом. */
+  .hp{position:absolute;left:-9999px;opacity:0;height:0;width:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Шкаф-купе на заказ</h1>
+  <p class="sub">Соберите конфигурацию и посмотрите ориентировочную стоимость</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="field">
+        <label>Ширина <span class="val"><span id="wV">200</span> см</span></label>
+        <input type="range" id="w" min="100" max="400" step="10" value="200">
+      </div>
+
+      <div class="field">
+        <label>Высота <span class="val"><span id="hV">240</span> см</span></label>
+        <input type="range" id="h" min="180" max="320" step="10" value="240">
+      </div>
+
+      <div class="field">
+        <label>Глубина <span class="val"><span id="dV">60</span> см</span></label>
+        <input type="range" id="d" min="40" max="80" step="5" value="60">
+      </div>
+
+      <div class="field">
+        <label>Материал корпуса</label>
+        <div class="opts" id="mat">
+          <div class="opt on" data-k="1"    data-n="ЛДСП">ЛДСП</div>
+          <div class="opt" data-k="1.35" data-n="МДФ">МДФ</div>
+          <div class="opt" data-k="1.9"  data-n="Массив">Массив</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Двери</label>
+        <div class="opts" id="door">
+          <div class="opt on" data-k="1"    data-n="ЛДСП в цвет">ЛДСП в цвет</div>
+          <div class="opt" data-k="1.25" data-n="Зеркало">Зеркало</div>
+          <div class="opt" data-k="1.5"  data-n="Стекло с плёнкой">Стекло с плёнкой</div>
+          <div class="opt" data-k="1.7"  data-n="Пескоструй">Пескоструй</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Наполнение</label>
+        <div class="opts" id="fill">
+          <div class="opt on" data-k="0"     data-n="Базовое">Базовое</div>
+          <div class="opt" data-k="8000"  data-n="Ящики + штанги">Ящики + штанги</div>
+          <div class="opt" data-k="16000" data-n="Гардеробная система">Гардеробная система</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Подсветка</label>
+        <div class="opts" id="light">
+          <div class="opt on" data-k="0"    data-n="Без подсветки">Нет</div>
+          <div class="opt" data-k="4500" data-n="LED по периметру">LED по периметру</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card total">
+      <div class="hint">Ориентировочная стоимость</div>
+      <div class="price" id="price">0 ₽</div>
+      <div class="hint">Точная цена после замера</div>
+
+      <div class="rows" id="rows"></div>
+
+      <input type="text" id="name" placeholder="Как к вам обращаться" autocomplete="name">
+      <input type="tel" id="phone" placeholder="Телефон" autocomplete="tel">
+      <input type="text" id="company" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button id="send">Вызвать замерщика</button>
+      <div class="ok" id="ok">Заявка принята. Мы перезвоним и подтвердим замер.<br>
+        Конфигурация уже приложена к заявке.</div>
+      <div class="err" id="err">Не удалось отправить заявку. Проверьте связь и попробуйте ещё раз.</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Это демонстрационный набросок.</b> Формула расчёта и коэффициенты условные,
+    подставляются ваши реальные. Заявка уходит вместе с собранной конфигурацией,
+    менеджеру не нужно переспрашивать размеры и материалы.
+  </div>
+</div>
+
+<script>
+var BASE_M2 = 9500; // условная база за м² фасада
+// Приём заявок: релей FormSubmit. GitHub Pages отдаёт только статику, своего
+// бэкенда у страницы нет, поэтому письмо отправляет сторонний сервис.
+var FORM_ENDPOINT = 'https://formsubmit.co/ajax/ithakawork@gmail.com';
+
+var last = {}; // последняя посчитанная конфигурация — уходит в письмо заявки
+
+function pickGroup(id){
+  var box = document.getElementById(id);
+  box.addEventListener('click', function(e){
+    var t = e.target.closest('.opt');
+    if(!t) return;
+    box.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('on'); });
+    t.classList.add('on');
+    calc();
+  });
+}
+function sel(id){ return document.getElementById(id).querySelector('.opt.on'); }
+
+function calc(){
+  var w = +document.getElementById('w').value,
+      h = +document.getElementById('h').value,
+      d = +document.getElementById('d').value;
+
+  document.getElementById('wV').textContent = w;
+  document.getElementById('hV').textContent = h;
+  document.getElementById('dV').textContent = d;
+
+  var mat = sel('mat'), door = sel('door'), fill = sel('fill'), light = sel('light');
+  var area = (w/100) * (h/100);
+  var depthK = 1 + (d - 60) / 200;
+
+  var price = area * BASE_M2 * +mat.dataset.k * +door.dataset.k * depthK
+            + (+fill.dataset.k) + (+light.dataset.k);
+  price = Math.round(price / 500) * 500;
+
+  document.getElementById('price').textContent =
+    price.toLocaleString('ru-RU') + ' ₽';
+
+  document.getElementById('rows').innerHTML =
+    row('Размер', w + '×' + h + '×' + d + ' см') +
+    row('Корпус', mat.dataset.n) +
+    row('Двери', door.dataset.n) +
+    row('Наполнение', fill.dataset.n) +
+    row('Подсветка', light.dataset.n) +
+    row('Площадь фасада', area.toFixed(2) + ' м²');
+
+  last = {
+    'Размер': w + '×' + h + '×' + d + ' см',
+    'Корпус': mat.dataset.n,
+    'Двери': door.dataset.n,
+    'Наполнение': fill.dataset.n,
+    'Подсветка': light.dataset.n,
+    'Площадь фасада': area.toFixed(2) + ' м²',
+    'Расчёт': price.toLocaleString('ru-RU') + ' ₽'
+  };
+}
+function row(k, v){ return '<div class="row"><span>' + k + '</span><b>' + v + '</b></div>'; }
+
+['w','h','d'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', calc);
+});
+['mat','door','fill','light'].forEach(pickGroup);
+
+document.getElementById('send').addEventListener('click', function(){
+  var n = document.getElementById('name').value.trim();
+  var p = document.getElementById('phone').value.trim();
+  if(!n || !p){ alert('Заполните имя и телефон'); return; }
+  // Ботовая ловушка сработала — делаем вид, что всё хорошо, письмо не шлём.
+  if(document.getElementById('company').value){
+    document.getElementById('ok').style.display = 'block';
+    return;
+  }
+
+  var btn = this;
+  var ok = document.getElementById('ok');
+  var err = document.getElementById('err');
+  err.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Отправляем…';
+
+  var payload = {
+    _subject: 'Заявка с демо-калькулятора',
+    _template: 'table',
+    _captcha: 'false',
+    'Имя': n,
+    'Телефон': p
+  };
+  Object.keys(last).forEach(function(k){ payload[k] = last[k]; });
+
+  fetch(FORM_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r){ return r.json().catch(function(){ return {}; }); })
+  .then(function(data){
+    if(data && (data.success === 'true' || data.success === true)){
+      ok.style.display = 'block';
+      btn.textContent = 'Заявка отправлена';
+    } else {
+      throw new Error(data && data.message ? data.message : 'unknown');
+    }
+  })
+  .catch(function(){
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Вызвать замерщика';
+  });
+});
+
+calc();
+</script>
+</body>
+</html>
