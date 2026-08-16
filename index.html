@@ -3,436 +3,604 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Калькулятор стоимости для сайта производителя — демо</title>
-<meta name="description" content="Демонстрационный калькулятор: клиент собирает конфигурацию, видит ориентир по цене сразу и оставляет заявку вместе с расчётом.">
+<title>Калькулятор стоимости на сайт — демо</title>
+<meta name="description" content="Демонстрация того, как считает цена прямо на сайте: клиент собирает конфигурацию или объём закупки, видит сумму сразу и оставляет заявку вместе с расчётом.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
   :root{
-    --bg:#edeef0; --card:#fff; --ink:#1f2229; --muted:#828894;
-    --line:#e2e4e8; --accent:#29a9eb; --accent-soft:#eaf6fe;
-    --r-card:28px; --r-soft:16px; --r-pill:100px;
+    --bg:#f4f6f8;
+    --bg-glow:#e8eef7;
+    --card:#ffffff;
+    --ink:#15181f;
+    --ink-soft:#3d4351;
+    --muted:#7c8496;
+    --line:#e8ebf0;
+    --accent:#2f6bff;
+    --accent-deep:#1f4fd8;
+    --accent-soft:#eef3ff;
+    --good:#12a06a;
+    --good-soft:#e8f8f1;
+    --r-lg:26px;
+    --r-md:16px;
+    --r-pill:999px;
+    --shadow-sm:0 1px 2px rgba(20,26,40,.05), 0 4px 14px rgba(20,26,40,.045);
+    --shadow-md:0 2px 6px rgba(20,26,40,.06), 0 18px 44px rgba(20,26,40,.08);
+    --ease:cubic-bezier(.22,.72,.24,1);
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-       font:16px/1.6 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-       -webkit-font-smoothing:antialiased}
-  .wrap{max-width:1040px;margin:0 auto;padding:40px 20px 72px}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;color:var(--ink);
+    background:
+      radial-gradient(1100px 520px at 78% -8%, var(--bg-glow) 0%, rgba(232,238,247,0) 62%),
+      radial-gradient(760px 420px at 4% 8%, #eef2fb 0%, rgba(238,242,251,0) 58%),
+      var(--bg);
+    font:16px/1.6 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:44px 20px 80px}
 
-  .brand{display:inline-flex;align-items:center;gap:9px;background:var(--ink);color:#fff;
-         border-radius:var(--r-pill);padding:8px 18px;font-size:12px;font-weight:700;
-         letter-spacing:.14em;text-transform:uppercase}
-  .brand i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:block}
-  h1{font-size:40px;line-height:1.15;font-weight:800;letter-spacing:-.02em;margin:22px 0 10px}
-  .sub{color:var(--muted);margin:0 0 30px;max-width:620px;font-size:17px}
+  /* ---------- шапка ---------- */
+  .badge{
+    display:inline-flex;align-items:center;gap:9px;
+    background:rgba(21,24,31,.05);color:var(--ink-soft);
+    border-radius:var(--r-pill);padding:7px 16px 7px 12px;
+    font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .badge i{width:7px;height:7px;border-radius:50%;background:var(--accent);
+           box-shadow:0 0 0 4px rgba(47,107,255,.16);animation:pulse 2.6s var(--ease) infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(47,107,255,.16)}50%{box-shadow:0 0 0 8px rgba(47,107,255,.05)}}
+  h1{font-size:clamp(30px,4.4vw,46px);line-height:1.1;font-weight:800;letter-spacing:-.03em;margin:20px 0 12px}
+  h1 span{background:linear-gradient(94deg,var(--accent) 0%,#7aa2ff 100%);
+          -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:640px;font-size:17px}
 
-  .kinds{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px}
-  .kind{border:0;background:#fff;color:var(--ink);border-radius:var(--r-pill);
-        padding:13px 26px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;
-        transition:.16s;box-shadow:0 1px 2px rgba(13,17,26,.06)}
-  .kind:hover{transform:translateY(-1px)}
-  .kind.on{background:var(--ink);color:#fff}
+  /* ---------- переключатель режима ---------- */
+  .modes{position:relative;display:inline-flex;gap:4px;padding:5px;margin-bottom:18px;
+         background:rgba(255,255,255,.8);border:1px solid var(--line);
+         border-radius:var(--r-pill);box-shadow:var(--shadow-sm);backdrop-filter:blur(6px)}
+  .mode-pill{position:absolute;top:5px;bottom:5px;left:5px;border-radius:var(--r-pill);
+             background:var(--ink);transition:transform .38s var(--ease),width .38s var(--ease);z-index:0}
+  .mode{position:relative;z-index:1;border:0;background:transparent;color:var(--muted);
+        border-radius:var(--r-pill);padding:11px 22px;font:inherit;font-weight:700;font-size:14.5px;
+        cursor:pointer;transition:color .28s var(--ease);white-space:nowrap}
+  .mode.on{color:#fff}
 
-  .grid{display:grid;grid-template-columns:1fr 350px;gap:22px;align-items:start}
-  @media(max-width:860px){.grid{grid-template-columns:1fr}h1{font-size:31px}}
-  .card{background:var(--card);border-radius:var(--r-card);padding:30px}
+  /* ---------- вкладки ниш ---------- */
+  .niches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px}
+  .niche{border:1px solid var(--line);background:rgba(255,255,255,.75);color:var(--ink-soft);
+         border-radius:var(--r-pill);padding:10px 18px;font:inherit;font-weight:600;font-size:14px;
+         cursor:pointer;transition:transform .22s var(--ease),border-color .22s var(--ease),
+         background .22s var(--ease),color .22s var(--ease),box-shadow .22s var(--ease)}
+  .niche:hover{transform:translateY(-2px);border-color:#cfd9ee;box-shadow:var(--shadow-sm)}
+  .niche.on{background:var(--accent);border-color:var(--accent);color:#fff;
+            box-shadow:0 8px 20px rgba(47,107,255,.26)}
+  .niche.enter{animation:chipIn .34s var(--ease) both}
+  @keyframes chipIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ---------- сетка ---------- */
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start}
+  @media(max-width:920px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid rgba(232,235,240,.9);
+        border-radius:var(--r-lg);padding:30px;box-shadow:var(--shadow-md)}
+
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+              margin:-4px 0 24px}
+  .panel-title{font-size:19px;font-weight:800;letter-spacing:-.01em}
+  .panel-unit{color:var(--muted);font-size:13px;font-weight:600}
+  .fields{animation:panelIn .4s var(--ease) both}
+  @keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
   .field{margin-bottom:24px}
   .field:last-child{margin-bottom:0}
-  label{display:block;font-weight:500;margin-bottom:11px;font-size:12px;
-        letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .val{float:right;font-weight:700;color:var(--accent);letter-spacing:0;text-transform:none;font-size:14px}
-  input[type=range]{width:100%;accent-color:var(--accent);height:22px}
+  .flabel{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:11px}
+  .flabel span.t{font-weight:600;font-size:12px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+  .flabel span.v{font-weight:800;font-size:15px;color:var(--accent);font-variant-numeric:tabular-nums}
+
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:var(--r-pill);
+    background:linear-gradient(90deg,var(--accent) var(--fill,40%),#e6eaf2 var(--fill,40%));outline:0;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+    background:#fff;border:2px solid var(--accent);box-shadow:0 4px 12px rgba(47,107,255,.3);
+    transition:transform .18s var(--ease)}
+  input[type=range]:active::-webkit-slider-thumb{transform:scale(1.14)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;
+    border:2px solid var(--accent);box-shadow:0 4px 12px rgba(47,107,255,.3)}
+
   .opts{display:flex;flex-wrap:wrap;gap:8px}
   .opt{border:1.5px solid var(--line);background:#fff;border-radius:var(--r-pill);
-       padding:10px 18px;cursor:pointer;font-size:14px;font-weight:500;transition:.16s;user-select:none}
-  .opt:hover{border-color:var(--accent)}
-  .opt.on{border-color:var(--accent);background:var(--accent-soft);color:#127cb4;font-weight:700}
+       padding:10px 17px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink-soft);
+       transition:transform .2s var(--ease),border-color .2s var(--ease),background .2s var(--ease),color .2s var(--ease);
+       user-select:none}
+  .opt:hover{border-color:#c3d2f4;transform:translateY(-1px)}
+  .opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-deep)}
 
-  .total{position:sticky;top:24px}
-  .cap{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .price{font-size:38px;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
+  /* ---------- итог ---------- */
+  .total{position:sticky;top:22px}
+  .cap{font-size:12px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .price{font-size:40px;font-weight:800;letter-spacing:-.03em;margin:10px 0 2px;
+         font-variant-numeric:tabular-nums}
   .hint{color:var(--muted);font-size:13px}
-  .rows{border-top:1px solid var(--line);margin:20px 0;padding-top:16px}
+  .save{display:inline-flex;align-items:center;gap:7px;margin-top:12px;background:var(--good-soft);
+        color:var(--good);border-radius:var(--r-pill);padding:7px 14px;font-size:13px;font-weight:700}
+  .save[hidden]{display:none}
+
+  .bar{display:flex;height:8px;border-radius:var(--r-pill);overflow:hidden;margin:20px 0 14px;background:#eef1f6}
+  .bar span{display:block;height:100%;transition:width .5s var(--ease)}
+  .bar .b1{background:var(--accent)}
+  .bar .b2{background:#8fb0ff}
+  .bar .b3{background:#c9d8ff}
+
+  .rows{border-top:1px solid var(--line);margin-top:4px;padding-top:14px}
   .row{display:flex;justify-content:space-between;gap:14px;font-size:14px;padding:6px 0;color:var(--muted)}
-  .row b{color:var(--ink);font-weight:700;text-align:right}
+  .row b{color:var(--ink);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+
+  .form{margin-top:22px}
   input[type=text],input[type=tel]{width:100%;padding:14px 18px;border:1.5px solid var(--line);
-       border-radius:var(--r-soft);font-size:15px;margin-bottom:10px;font-family:inherit;background:#fbfbfc}
-  input[type=text]:focus,input[type=tel]:focus{outline:0;border-color:var(--accent);background:#fff}
-  button.send{width:100%;padding:16px;background:var(--accent);color:#fff;border:0;
-       border-radius:var(--r-pill);font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.16s}
-  button.send:hover{background:#1f93d1}
-  button.send:disabled{background:var(--muted);cursor:default}
-  .ok{display:none;background:#eafaf1;color:#0f6b45;padding:15px 18px;
-      border-radius:var(--r-soft);font-size:14px;margin-top:12px}
-  .err{display:none;background:#fdecec;color:#8d2020;padding:15px 18px;
-      border-radius:var(--r-soft);font-size:14px;margin-top:12px}
-  .note{margin-top:24px;background:var(--ink);color:#c9cdd6;padding:20px 24px;
-        border-radius:var(--r-card);font-size:13.5px;line-height:1.65}
-  .note b{color:#fff}
-  .foot{margin-top:18px;color:var(--muted);font-size:13px}
-  /* Ловушка для ботов: человеку не видна, автосабмит её заполняет. */
+    border-radius:var(--r-md);font-size:15px;margin-bottom:10px;font-family:inherit;background:#fafbfd;
+    transition:border-color .2s var(--ease),background .2s var(--ease),box-shadow .2s var(--ease)}
+  input[type=text]:focus,input[type=tel]:focus{outline:0;border-color:var(--accent);background:#fff;
+    box-shadow:0 0 0 4px rgba(47,107,255,.12)}
+  button.send{width:100%;padding:16px;border:0;border-radius:var(--r-pill);cursor:pointer;
+    background:linear-gradient(180deg,var(--accent) 0%,var(--accent-deep) 100%);color:#fff;
+    font:inherit;font-size:15px;font-weight:700;box-shadow:0 10px 24px rgba(47,107,255,.3);
+    transition:transform .2s var(--ease),box-shadow .2s var(--ease),filter .2s var(--ease)}
+  button.send:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(47,107,255,.36)}
+  button.send:active{transform:translateY(0)}
+  button.send:disabled{background:#aeb6c6;box-shadow:none;transform:none;cursor:default}
+  .msg{display:none;padding:14px 17px;border-radius:var(--r-md);font-size:14px;margin-top:12px;
+       animation:panelIn .3s var(--ease) both}
+  .msg.ok{background:var(--good-soft);color:var(--good)}
+  .msg.err{background:#fdeceb;color:#b03024}
   .hp{position:absolute;left:-9999px;opacity:0;height:0;width:0}
+
+  .note{margin-top:26px;background:linear-gradient(140deg,#1a1e27 0%,#232935 100%);color:#b8c0d0;
+        padding:24px 28px;border-radius:var(--r-lg);font-size:14px;line-height:1.7}
+  .note b{color:#fff}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><i></i>Демо · расчёт на сайте</div>
-  <h1>Посчитайте мебель<br>до приезда замерщика</h1>
-  <p class="sub">Соберите конфигурацию, и увидите ориентир по стоимости сразу. Заявка уйдёт вместе с параметрами, менеджеру не придётся переспрашивать размеры и материалы.</p>
+  <div class="badge"><i></i>Демо · расчёт прямо на сайте</div>
+  <h1>Клиент считает сам,<br>а не <span>ждёт менеджера</span></h1>
+  <p class="sub">Соберите конфигурацию или объём закупки — сумма появится сразу. Заявка уходит вместе с расчётом, так что переспрашивать размеры, материалы и количество уже не нужно.</p>
 
-  <div class="kinds" id="kinds">
-    <button class="kind on" data-kind="kitchen">Кухня</button>
-    <button class="kind" data-kind="wardrobe">Шкаф-купе</button>
-    <button class="kind" data-kind="hall">Прихожая</button>
+  <div class="modes" id="modes">
+    <div class="mode-pill" id="modePill"></div>
+    <button class="mode on" data-mode="custom">Под заказ</button>
+    <button class="mode" data-mode="wholesale">Опт и дистрибуция</button>
   </div>
+
+  <div class="niches" id="niches"></div>
 
   <div class="grid">
     <div class="card">
-
-      <!-- КУХНЯ -->
-      <div class="panel" data-kind="kitchen">
-        <div class="field">
-          <label>Длина гарнитура <span class="val"><span id="kLenV">3.2</span> м</span></label>
-          <input type="range" id="kLen" min="1.2" max="8" step="0.1" value="3.2">
-        </div>
-        <div class="field">
-          <label>Планировка</label>
-          <div class="opts" data-group="kShape">
-            <div class="opt on" data-k="1" data-n="Прямая">Прямая</div>
-            <div class="opt" data-k="1.15" data-n="Угловая">Угловая</div>
-            <div class="opt" data-k="1.3" data-n="П-образная">П-образная</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Фасады</label>
-          <div class="opts" data-group="kFront">
-            <div class="opt on" data-k="1" data-n="ЛДСП">ЛДСП</div>
-            <div class="opt" data-k="1.3" data-n="МДФ в плёнке">МДФ в плёнке</div>
-            <div class="opt" data-k="1.75" data-n="МДФ эмаль">МДФ эмаль</div>
-            <div class="opt" data-k="2.4" data-n="Массив">Массив</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Столешница</label>
-          <div class="opts" data-group="kTop">
-            <div class="opt on" data-k="1" data-n="ЛДСП постформинг">ЛДСП постформинг</div>
-            <div class="opt" data-k="1.35" data-n="Искусственный камень">Искусственный камень</div>
-            <div class="opt" data-k="1.9" data-n="Кварцевый агломерат">Кварцевый агломерат</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Верхний ярус</label>
-          <div class="opts" data-group="kUpper">
-            <div class="opt on" data-k="1" data-n="Стандартный">Стандартный</div>
-            <div class="opt" data-k="1.18" data-n="До потолка">До потолка</div>
-            <div class="opt" data-k="0.82" data-n="Без верхних шкафов">Без верхних шкафов</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Механизмы</label>
-          <div class="opts" data-group="kHard">
-            <div class="opt on" data-k="0" data-n="Базовые">Базовые</div>
-            <div class="opt" data-k="14000" data-n="Доводчики и подъёмники">Доводчики и подъёмники</div>
-            <div class="opt" data-k="26000" data-n="Полное оснащение">Полное оснащение</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Подсветка рабочей зоны</label>
-          <div class="opts" data-group="kLight">
-            <div class="opt on" data-k="0" data-n="Нет">Нет</div>
-            <div class="opt" data-k="7500" data-n="LED по фартуку">LED по фартуку</div>
-          </div>
-        </div>
+      <div class="panel-head">
+        <div class="panel-title" id="panelTitle"></div>
+        <div class="panel-unit" id="panelUnit"></div>
       </div>
-
-      <!-- ШКАФ-КУПЕ -->
-      <div class="panel" data-kind="wardrobe" hidden>
-        <div class="field">
-          <label>Ширина <span class="val"><span id="wWV">200</span> см</span></label>
-          <input type="range" id="wW" min="100" max="400" step="10" value="200">
-        </div>
-        <div class="field">
-          <label>Высота <span class="val"><span id="wHV">240</span> см</span></label>
-          <input type="range" id="wH" min="180" max="320" step="10" value="240">
-        </div>
-        <div class="field">
-          <label>Глубина <span class="val"><span id="wDV">60</span> см</span></label>
-          <input type="range" id="wD" min="40" max="80" step="5" value="60">
-        </div>
-        <div class="field">
-          <label>Материал корпуса</label>
-          <div class="opts" data-group="wMat">
-            <div class="opt on" data-k="1" data-n="ЛДСП">ЛДСП</div>
-            <div class="opt" data-k="1.35" data-n="МДФ">МДФ</div>
-            <div class="opt" data-k="1.9" data-n="Массив">Массив</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Двери</label>
-          <div class="opts" data-group="wDoor">
-            <div class="opt on" data-k="1" data-n="ЛДСП в цвет">ЛДСП в цвет</div>
-            <div class="opt" data-k="1.25" data-n="Зеркало">Зеркало</div>
-            <div class="opt" data-k="1.5" data-n="Стекло с плёнкой">Стекло с плёнкой</div>
-            <div class="opt" data-k="1.7" data-n="Пескоструй">Пескоструй</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Наполнение</label>
-          <div class="opts" data-group="wFill">
-            <div class="opt on" data-k="0" data-n="Базовое">Базовое</div>
-            <div class="opt" data-k="8000" data-n="Ящики и штанги">Ящики и штанги</div>
-            <div class="opt" data-k="16000" data-n="Гардеробная система">Гардеробная система</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Подсветка</label>
-          <div class="opts" data-group="wLight">
-            <div class="opt on" data-k="0" data-n="Нет">Нет</div>
-            <div class="opt" data-k="4500" data-n="LED по периметру">LED по периметру</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ПРИХОЖАЯ -->
-      <div class="panel" data-kind="hall" hidden>
-        <div class="field">
-          <label>Ширина <span class="val"><span id="hWV">160</span> см</span></label>
-          <input type="range" id="hW" min="80" max="320" step="10" value="160">
-        </div>
-        <div class="field">
-          <label>Высота <span class="val"><span id="hHV">230</span> см</span></label>
-          <input type="range" id="hH" min="180" max="300" step="10" value="230">
-        </div>
-        <div class="field">
-          <label>Глубина <span class="val"><span id="hDV">40</span> см</span></label>
-          <input type="range" id="hD" min="25" max="60" step="5" value="40">
-        </div>
-        <div class="field">
-          <label>Материал корпуса</label>
-          <div class="opts" data-group="hMat">
-            <div class="opt on" data-k="1" data-n="ЛДСП">ЛДСП</div>
-            <div class="opt" data-k="1.35" data-n="МДФ">МДФ</div>
-            <div class="opt" data-k="1.9" data-n="Массив">Массив</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Фасады</label>
-          <div class="opts" data-group="hFront">
-            <div class="opt on" data-k="1" data-n="Глухие">Глухие</div>
-            <div class="opt" data-k="1.2" data-n="С зеркалом">С зеркалом</div>
-            <div class="opt" data-k="1.45" data-n="Комбинированные">Комбинированные</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Открытая зона</label>
-          <div class="opts" data-group="hOpen">
-            <div class="opt on" data-k="0" data-n="Нет">Нет</div>
-            <div class="opt" data-k="6500" data-n="Вешалка и полка">Вешалка и полка</div>
-            <div class="opt" data-k="11000" data-n="Вешалка, полка, банкетка">Вешалка, полка, банкетка</div>
-          </div>
-        </div>
-        <div class="field">
-          <label>Подсветка</label>
-          <div class="opts" data-group="hLight">
-            <div class="opt on" data-k="0" data-n="Нет">Нет</div>
-            <div class="opt" data-k="4000" data-n="LED в зоне зеркала">LED в зоне зеркала</div>
-          </div>
-        </div>
-      </div>
-
+      <div id="fields"></div>
     </div>
 
     <div class="card total">
-      <div class="cap">Ориентировочно</div>
+      <div class="cap" id="totalCap">Ориентировочно</div>
       <div class="price" id="price">0 ₽</div>
-      <div class="hint">Точная цена после замера</div>
+      <div class="hint" id="priceHint">Точная цена после замера</div>
+      <div class="save" id="save" hidden></div>
 
+      <div class="bar"><span class="b1" id="bar1"></span><span class="b2" id="bar2"></span><span class="b3" id="bar3"></span></div>
       <div class="rows" id="rows"></div>
 
-      <input type="text" id="cName" placeholder="Как к вам обращаться" autocomplete="name">
-      <input type="tel" id="cPhone" placeholder="Телефон" autocomplete="tel">
-      <input type="text" id="cCompany" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="send" id="send">Вызвать замерщика</button>
-      <div class="ok" id="ok">Заявка принята, мы перезвоним и подтвердим замер. Конфигурация уже приложена к заявке.</div>
-      <div class="err" id="err">Не удалось отправить заявку. Проверьте связь и попробуйте ещё раз.</div>
+      <div class="form">
+        <input type="text" id="cName" placeholder="Как к вам обращаться" autocomplete="name">
+        <input type="tel" id="cPhone" placeholder="Телефон" autocomplete="tel">
+        <input type="text" id="cTrap" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="send" id="send">Отправить заявку с расчётом</button>
+        <div class="msg ok" id="ok">Заявка принята — расчёт ушёл вместе с ней. Мы свяжемся и подтвердим детали.</div>
+        <div class="msg err" id="err">Не удалось отправить заявку. Проверьте связь и попробуйте ещё раз.</div>
+      </div>
     </div>
   </div>
 
   <div class="note">
-    <b>Это демонстрационный набросок.</b> Формула расчёта и коэффициенты здесь условные, поставлены для показа логики. В рабочей версии подставляются ваши реальные цены за метр, коэффициенты материалов и стоимость фурнитуры, и клиент видит ориентир, близкий к расчёту инженера. Заявка уходит вместе с собранной конфигурацией.
+    <b>Это демонстрационный набросок.</b> Ставки и коэффициенты здесь условные — они стоят, чтобы показать логику. В рабочей версии подставляются ваши цены, ваши материалы и ваша шкала скидок, и покупатель видит цифру, близкую к расчёту вашего менеджера. Заявка приходит уже с собранной конфигурацией: размеры, материалы, объём и сумма.
   </div>
-  <div class="foot">Набросок подготовлен студией Никиты Рыбалко · rybalkon.ru</div>
 </div>
 
 <script>
-// ---- Условные базовые ставки (правятся здесь) ----
-var BASE_KITCHEN_PM = 25000; // ₽ за погонный метр кухни
-var BASE_WARDROBE_M2 = 9500; // ₽ за м² фасада шкафа-купе
-var BASE_HALL_M2 = 8500;     // ₽ за м² фасада прихожей
+/* ================================================================
+   Схема ниш. Добавить нишу = добавить объект в NICHES:
+   поля описываются данными, разметка и обработчики строятся сами.
+   ================================================================ */
 
-// Приём заявок: релей FormSubmit. Страница на GitHub Pages статическая, своего
-// бэкенда у неё нет, поэтому письмо с расчётом отправляет сторонний сервис.
+var NICHES = [
+  /* ---------------- под заказ ---------------- */
+  {
+    id:'kitchen', mode:'custom', tab:'Кухни', title:'Кухня на заказ', unit:'считается по погонному метру',
+    fields:[
+      {id:'len', type:'range', label:'Длина гарнитура', min:1.2, max:8, step:.1, value:3.2, unit:'м', dec:1},
+      {id:'shape', type:'opts', label:'Планировка', options:[['Прямая',1],['Угловая',1.15],['П-образная',1.3]]},
+      {id:'front', type:'opts', label:'Фасады', options:[['ЛДСП',1],['МДФ в плёнке',1.3],['МДФ эмаль',1.75],['Массив',2.4]]},
+      {id:'top', type:'opts', label:'Столешница', options:[['ЛДСП',1],['Искусственный камень',1.35],['Кварц',1.9]]},
+      {id:'hard', type:'opts', label:'Механизмы', add:true, options:[['Базовые',0],['Доводчики и подъёмники',14000],['Полное оснащение',26000]]},
+      {id:'light', type:'opts', label:'Подсветка рабочей зоны', add:true, options:[['Нет',0],['LED по фартуку',7500]]}
+    ],
+    calc:function(v){
+      var base = v.len.n * 25000;
+      var mult = base * (v.shape.k * v.front.k * v.top.k) - base;
+      var adds = v.hard.k + v.light.k;
+      return {base:base, mult:mult, adds:adds, rows:[
+        ['Длина', v.len.n.toFixed(1) + ' м'], ['Планировка', v.shape.n], ['Фасады', v.front.n],
+        ['Столешница', v.top.n], ['Механизмы', v.hard.n], ['Подсветка', v.light.n]
+      ]};
+    }
+  },
+  {
+    id:'wardrobe', mode:'custom', tab:'Шкафы и гардеробные', title:'Шкаф-купе на заказ', unit:'считается по площади фасада',
+    fields:[
+      {id:'w', type:'range', label:'Ширина', min:100, max:400, step:10, value:200, unit:'см'},
+      {id:'h', type:'range', label:'Высота', min:180, max:320, step:10, value:240, unit:'см'},
+      {id:'d', type:'range', label:'Глубина', min:40, max:80, step:5, value:60, unit:'см'},
+      {id:'mat', type:'opts', label:'Материал корпуса', options:[['ЛДСП',1],['МДФ',1.35],['Массив',1.9]]},
+      {id:'door', type:'opts', label:'Двери', options:[['ЛДСП в цвет',1],['Зеркало',1.25],['Стекло с плёнкой',1.5],['Пескоструй',1.7]]},
+      {id:'fill', type:'opts', label:'Наполнение', add:true, options:[['Базовое',0],['Ящики и штанги',8000],['Гардеробная система',16000]]}
+    ],
+    calc:function(v){
+      var area = (v.w.n/100) * (v.h.n/100);
+      var depth = 1 + (v.d.n - 60)/200;
+      var base = area * 9500;
+      var mult = base * (v.mat.k * v.door.k * depth) - base;
+      return {base:base, mult:mult, adds:v.fill.k, rows:[
+        ['Размер', v.w.n + '×' + v.h.n + '×' + v.d.n + ' см'], ['Площадь фасада', area.toFixed(2) + ' м²'],
+        ['Корпус', v.mat.n], ['Двери', v.door.n], ['Наполнение', v.fill.n]
+      ]};
+    }
+  },
+  {
+    id:'windows', mode:'custom', tab:'Окна', title:'Окна ПВХ и алюминий', unit:'считается по площади проёма',
+    fields:[
+      {id:'w', type:'range', label:'Ширина проёма', min:60, max:300, step:10, value:140, unit:'см'},
+      {id:'h', type:'range', label:'Высота проёма', min:60, max:250, step:10, value:140, unit:'см'},
+      {id:'qty', type:'range', label:'Количество окон', min:1, max:12, step:1, value:3, unit:'шт'},
+      {id:'profile', type:'opts', label:'Профиль', options:[['Эконом',1],['Стандарт',1.25],['Премиум',1.6]]},
+      {id:'glass', type:'opts', label:'Стеклопакет', options:[['Однокамерный',1],['Двухкамерный',1.22],['Энергосберегающий',1.4]]},
+      {id:'extra', type:'opts', label:'Дополнительно', add:true, options:[['Без монтажа',0],['Монтаж и откосы',6500],['Монтаж, откосы, отлив',9200]]}
+    ],
+    calc:function(v){
+      var area = (v.w.n/100) * (v.h.n/100) * v.qty.n;
+      var base = area * 7800;
+      var mult = base * (v.profile.k * v.glass.k) - base;
+      var adds = v.extra.k * v.qty.n;
+      return {base:base, mult:mult, adds:adds, rows:[
+        ['Проём', v.w.n + '×' + v.h.n + ' см'], ['Количество', v.qty.n + ' шт'],
+        ['Общая площадь', area.toFixed(2) + ' м²'], ['Профиль', v.profile.n],
+        ['Стеклопакет', v.glass.n], ['Дополнительно', v.extra.n]
+      ]};
+    }
+  },
+  {
+    id:'doors', mode:'custom', tab:'Двери', title:'Входные и межкомнатные двери', unit:'считается за изделие',
+    fields:[
+      {id:'qty', type:'range', label:'Количество дверей', min:1, max:20, step:1, value:2, unit:'шт'},
+      {id:'kind', type:'opts', label:'Тип', options:[['Межкомнатная',0.62],['Входная стандарт',1],['Входная утеплённая',1.35]]},
+      {id:'finish', type:'opts', label:'Отделка', options:[['Ламинат',1],['МДФ-накладка',1.28],['Массив',1.7]]},
+      {id:'lock', type:'opts', label:'Фурнитура и замки', add:true, options:[['Базовая',0],['Усиленная',5200],['Премиум с броненакладкой',11500]]},
+      {id:'mount', type:'opts', label:'Установка', add:true, options:[['Без установки',0],['С установкой',4800]]}
+    ],
+    calc:function(v){
+      var base = v.qty.n * 21000;
+      var mult = base * (v.kind.k * v.finish.k) - base;
+      var adds = (v.lock.k + v.mount.k) * v.qty.n;
+      return {base:base, mult:mult, adds:adds, rows:[
+        ['Количество', v.qty.n + ' шт'], ['Тип', v.kind.n], ['Отделка', v.finish.n],
+        ['Фурнитура', v.lock.n], ['Установка', v.mount.n]
+      ]};
+    }
+  },
+  {
+    id:'fence', mode:'custom', tab:'Ограждения и ковка', title:'Забор, ворота, ковка', unit:'считается по погонному метру',
+    fields:[
+      {id:'len', type:'range', label:'Длина ограждения', min:5, max:200, step:5, value:40, unit:'м'},
+      {id:'height', type:'range', label:'Высота', min:1, max:3, step:.1, value:2, unit:'м', dec:1},
+      {id:'kind', type:'opts', label:'Тип секции', options:[['Профлист',1],['Евроштакетник',1.3],['Сварная секция',1.55],['Художественная ковка',2.6]]},
+      {id:'gate', type:'opts', label:'Ворота и калитка', add:true, options:[['Нет',0],['Калитка',18000],['Калитка и распашные ворота',54000],['Калитка и откатные ворота',96000]]},
+      {id:'mount', type:'opts', label:'Монтаж', add:true, options:[['Без монтажа',0],['Установка под ключ',0]], mountPerMeter:true}
+    ],
+    calc:function(v){
+      var base = v.len.n * 2900 * (v.height.n / 2);
+      var mult = base * v.kind.k - base;
+      var mount = (v.mount.n === 'Установка под ключ') ? v.len.n * 950 : 0;
+      return {base:base, mult:mult, adds:v.gate.k + mount, rows:[
+        ['Длина', v.len.n + ' м'], ['Высота', v.height.n.toFixed(1) + ' м'], ['Тип секции', v.kind.n],
+        ['Ворота и калитка', v.gate.n], ['Монтаж', v.mount.n]
+      ]};
+    }
+  },
+
+  /* ---------------- опт и дистрибуция ---------------- */
+  {
+    id:'mix', mode:'wholesale', tab:'Сухие смеси', title:'Расчёт объёма и цены', unit:'считается по расходу на площадь',
+    cap:'Стоимость партии', hint:'Цена с учётом объёмной скидки',
+    fields:[
+      {id:'area', type:'range', label:'Площадь обработки', min:20, max:3000, step:20, value:400, unit:'м²'},
+      {id:'layer', type:'range', label:'Толщина слоя', min:2, max:50, step:1, value:10, unit:'мм'},
+      {id:'kind', type:'opts', label:'Состав', options:[['Штукатурка гипсовая',1],['Штукатурка цементная',1.15],['Наливной пол',1.35],['Плиточный клей',1.25]]},
+      {id:'pack', type:'opts', label:'Фасовка', options:[['Мешок 25 кг',1],['Мешок 30 кг',0.97],['Биг-бэг 1 т',0.9]]}
+    ],
+    calc:function(v){
+      var consumption = 1.3 * v.kind.k;                 // кг на м² при слое 1 мм
+      var kg = v.area.n * v.layer.n * consumption;
+      var pricePerKg = 15.2 * v.kind.k * v.pack.k;      // условная цена за кг
+      var base = kg * pricePerKg;
+      var disc = kg >= 20000 ? .12 : kg >= 8000 ? .08 : kg >= 3000 ? .05 : kg >= 1000 ? .03 : 0;
+      var bags = Math.ceil(kg / (v.pack.n === 'Мешок 30 кг' ? 30 : v.pack.n === 'Биг-бэг 1 т' ? 1000 : 25));
+      return {base:base, mult:0, adds:0, discount:disc, rows:[
+        ['Площадь', v.area.n + ' м²'], ['Слой', v.layer.n + ' мм'], ['Состав', v.kind.n],
+        ['Расход', Math.round(kg).toLocaleString('ru-RU') + ' кг'],
+        ['Упаковок', bags.toLocaleString('ru-RU') + ' шт'],
+        ['Скидка за объём', disc ? Math.round(disc*100) + '%' : 'нет']
+      ]};
+    }
+  },
+  {
+    id:'fasteners', mode:'wholesale', tab:'Крепёж и метизы', title:'Оптовый заказ крепежа', unit:'считается по объёму закупки',
+    cap:'Стоимость заказа', hint:'Цена уже со скидкой вашего уровня',
+    fields:[
+      {id:'sum', type:'range', label:'Объём закупки в месяц', min:50, max:3000, step:50, value:600, unit:'тыс ₽'},
+      {id:'group', type:'opts', label:'Основная группа', options:[['Метизы стандарт',1],['Такелаж',1.12],['Нержавеющий крепёж',1.3]]},
+      {id:'terms', type:'opts', label:'Условия', options:[['Самовывоз',1],['Доставка по городу',1.02],['Доставка по РФ',1.05]]},
+      {id:'pay', type:'opts', label:'Оплата', options:[['Предоплата',1],['Отсрочка 14 дней',1.03],['Отсрочка 30 дней',1.05]]}
+    ],
+    calc:function(v){
+      var base = v.sum.n * 1000 * v.group.k;
+      var mult = base * (v.terms.k * v.pay.k) - base;
+      var s = v.sum.n;
+      var disc = s >= 2000 ? .12 : s >= 1000 ? .09 : s >= 500 ? .07 : s >= 200 ? .05 : .03;
+      return {base:base, mult:mult, adds:0, discount:disc, rows:[
+        ['Объём закупки', v.sum.n.toLocaleString('ru-RU') + ' тыс ₽'], ['Группа', v.group.n],
+        ['Условия', v.terms.n], ['Оплата', v.pay.n],
+        ['Ваша скидка', Math.round(disc*100) + '%']
+      ]};
+    }
+  },
+  {
+    id:'electro', mode:'wholesale', tab:'Электрика и кабель', title:'Оптовая заявка на электрику', unit:'считается по метражу и позициям',
+    cap:'Стоимость заявки', hint:'Цена уже со скидкой вашего уровня',
+    fields:[
+      {id:'cable', type:'range', label:'Кабель', min:100, max:20000, step:100, value:3000, unit:'м'},
+      {id:'section', type:'opts', label:'Сечение', options:[['3×1,5 мм²',1],['3×2,5 мм²',1.55],['5×4 мм²',3.1],['5×6 мм²',4.4]]},
+      {id:'gear', type:'range', label:'Автоматы и модулька', min:0, max:800, step:10, value:120, unit:'шт'},
+      {id:'brand', type:'opts', label:'Бренд', options:[['Отечественный',1],['ABB / Legrand',1.7]]}
+    ],
+    calc:function(v){
+      var cableSum = v.cable.n * 42 * v.section.k;
+      var gearSum = v.gear.n * 380 * v.brand.k;
+      var base = cableSum + gearSum;
+      var disc = base >= 1500000 ? .12 : base >= 700000 ? .09 : base >= 250000 ? .06 : base >= 80000 ? .04 : 0;
+      return {base:base, mult:0, adds:0, discount:disc, rows:[
+        ['Кабель', v.cable.n.toLocaleString('ru-RU') + ' м, ' + v.section.n],
+        ['Кабель, сумма', Math.round(cableSum).toLocaleString('ru-RU') + ' ₽'],
+        ['Модульное оборудование', v.gear.n + ' шт, ' + v.brand.n],
+        ['Оборудование, сумма', Math.round(gearSum).toLocaleString('ru-RU') + ' ₽'],
+        ['Скидка за объём', disc ? Math.round(disc*100) + '%' : 'нет']
+      ]};
+    }
+  }
+];
+
+/* ================================================================
+   Приём заявок: релей FormSubmit. Страница статическая, бэкенда у неё
+   нет, письмо с расчётом отправляет сторонний сервис.
+   ================================================================ */
 var FORM_ENDPOINT = 'https://formsubmit.co/ajax/ithakawork@gmail.com';
 
-var kind = 'kitchen';
-var last = {}; // последняя посчитанная конфигурация — уходит в письмо заявки
+var mode = 'custom';
+var niche = NICHES[0];
+var state = {};        // значения полей текущей ниши
+var last = {};         // что уйдёт в заявку
+var shownPrice = 0;    // для плавной анимации цифры
+var priceRaf = null;
 
-function sel(group){
-  return document.querySelector('[data-group="' + group + '"] .opt.on');
+var $ = function(id){ return document.getElementById(id); };
+var fmt = function(n){ return Math.round(n).toLocaleString('ru-RU') + ' ₽'; };
+
+/* ---------- вкладки режимов ---------- */
+function movePill(){
+  var active = document.querySelector('.mode.on');
+  var pill = $('modePill');
+  pill.style.width = active.offsetWidth + 'px';
+  pill.style.transform = 'translateX(' + (active.offsetLeft - 5) + 'px)';
 }
-function k(group){ return +sel(group).dataset.k; }
-function n(group){ return sel(group).dataset.n; }
-function row(label, value){
-  return '<div class="row"><span>' + label + '</span><b>' + value + '</b></div>';
-}
-function num(id){ return +document.getElementById(id).value; }
-function show(id, value){ document.getElementById(id).textContent = value; }
-
-function calc(){
-  var price = 0, rows = '';
-
-  if(kind === 'kitchen'){
-    var len = num('kLen');
-    show('kLenV', len.toFixed(1));
-    price = len * BASE_KITCHEN_PM * k('kShape') * k('kFront') * k('kTop') * k('kUpper')
-          + k('kHard') + k('kLight');
-    last = {
-      'Изделие': 'Кухня',
-      'Длина': len.toFixed(1) + ' м',
-      'Планировка': n('kShape'),
-      'Фасады': n('kFront'),
-      'Столешница': n('kTop'),
-      'Верхний ярус': n('kUpper'),
-      'Механизмы': n('kHard'),
-      'Подсветка': n('kLight')
-    };
-  }
-
-  if(kind === 'wardrobe'){
-    var ww = num('wW'), wh = num('wH'), wd = num('wD');
-    show('wWV', ww); show('wHV', wh); show('wDV', wd);
-    var wArea = (ww/100) * (wh/100);
-    var wDepth = 1 + (wd - 60) / 200;
-    price = wArea * BASE_WARDROBE_M2 * k('wMat') * k('wDoor') * wDepth
-          + k('wFill') + k('wLight');
-    last = {
-      'Изделие': 'Шкаф-купе',
-      'Размер': ww + '×' + wh + '×' + wd + ' см',
-      'Корпус': n('wMat'),
-      'Двери': n('wDoor'),
-      'Наполнение': n('wFill'),
-      'Подсветка': n('wLight'),
-      'Площадь фасада': wArea.toFixed(2) + ' м²'
-    };
-  }
-
-  if(kind === 'hall'){
-    var hw = num('hW'), hh = num('hH'), hd = num('hD');
-    show('hWV', hw); show('hHV', hh); show('hDV', hd);
-    var hArea = (hw/100) * (hh/100);
-    var hDepth = 1 + (hd - 40) / 200;
-    price = hArea * BASE_HALL_M2 * k('hMat') * k('hFront') * hDepth
-          + k('hOpen') + k('hLight');
-    last = {
-      'Изделие': 'Прихожая',
-      'Размер': hw + '×' + hh + '×' + hd + ' см',
-      'Корпус': n('hMat'),
-      'Фасады': n('hFront'),
-      'Открытая зона': n('hOpen'),
-      'Подсветка': n('hLight'),
-      'Площадь фасада': hArea.toFixed(2) + ' м²'
-    };
-  }
-
-  price = Math.round(price / 500) * 500;
-  show('price', price.toLocaleString('ru-RU') + ' ₽');
-  last['Расчёт'] = price.toLocaleString('ru-RU') + ' ₽';
-
-  Object.keys(last).forEach(function(key){
-    if(key !== 'Расчёт') rows += row(key, last[key]);
-  });
-  document.getElementById('rows').innerHTML = rows;
-}
-
-// Переключение типа изделия
-document.getElementById('kinds').addEventListener('click', function(e){
-  var btn = e.target.closest('.kind');
-  if(!btn) return;
-  kind = btn.dataset.kind;
-  this.querySelectorAll('.kind').forEach(function(b){ b.classList.toggle('on', b === btn); });
-  document.querySelectorAll('.panel').forEach(function(p){
-    p.hidden = (p.dataset.kind !== kind);
-  });
-  calc();
+$('modes').addEventListener('click', function(e){
+  var btn = e.target.closest('.mode');
+  if(!btn || btn.dataset.mode === mode) return;
+  mode = btn.dataset.mode;
+  this.querySelectorAll('.mode').forEach(function(b){ b.classList.toggle('on', b === btn); });
+  movePill();
+  renderNiches();
+  selectNiche(NICHES.filter(function(n){ return n.mode === mode; })[0]);
 });
 
-// Выбор опции внутри группы
-document.querySelectorAll('[data-group]').forEach(function(box){
-  box.addEventListener('click', function(e){
-    var opt = e.target.closest('.opt');
-    if(!opt) return;
-    box.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('on'); });
-    opt.classList.add('on');
-    calc();
+/* ---------- вкладки ниш ---------- */
+function renderNiches(){
+  var box = $('niches');
+  box.innerHTML = '';
+  NICHES.filter(function(n){ return n.mode === mode; }).forEach(function(n, i){
+    var b = document.createElement('button');
+    b.className = 'niche enter' + (n === niche ? ' on' : '');
+    b.textContent = n.tab;
+    b.style.animationDelay = (i * 40) + 'ms';
+    b.addEventListener('click', function(){ selectNiche(n); });
+    box.appendChild(b);
   });
-});
+}
+function selectNiche(n){
+  niche = n;
+  renderNiches();
+  renderFields();
+  calc(true);
+}
 
-// Ползунки
-['kLen','wW','wH','wD','hW','hH','hD'].forEach(function(id){
-  document.getElementById(id).addEventListener('input', calc);
-});
+/* ---------- поля ниши ---------- */
+function renderFields(){
+  $('panelTitle').textContent = niche.title;
+  $('panelUnit').textContent = niche.unit;
+  $('totalCap').textContent = niche.cap || 'Ориентировочно';
+  $('priceHint').textContent = niche.hint || 'Точная цена после замера';
 
-// Заявка
-document.getElementById('send').addEventListener('click', function(){
-  var name = document.getElementById('cName').value.trim();
-  var phone = document.getElementById('cPhone').value.trim();
+  var box = $('fields');
+  box.className = 'fields';
+  box.innerHTML = '';
+  state = {};
+
+  niche.fields.forEach(function(f){
+    var wrap = document.createElement('div');
+    wrap.className = 'field';
+
+    if(f.type === 'range'){
+      state[f.id] = f.value;
+      wrap.innerHTML =
+        '<div class="flabel"><span class="t">' + f.label + '</span>' +
+        '<span class="v" data-out="' + f.id + '"></span></div>' +
+        '<input type="range" data-in="' + f.id + '" min="' + f.min + '" max="' + f.max +
+        '" step="' + f.step + '" value="' + f.value + '">';
+      box.appendChild(wrap);
+      var input = wrap.querySelector('input');
+      input.addEventListener('input', function(){
+        state[f.id] = +this.value;
+        paintRange(this, f);
+        calc();
+      });
+      paintRange(input, f);
+    }
+
+    if(f.type === 'opts'){
+      state[f.id] = 0;
+      var html = '<div class="flabel"><span class="t">' + f.label + '</span></div><div class="opts">';
+      f.options.forEach(function(o, i){
+        html += '<div class="opt' + (i === 0 ? ' on' : '') + '" data-i="' + i + '">' + o[0] + '</div>';
+      });
+      wrap.innerHTML = html + '</div>';
+      box.appendChild(wrap);
+      wrap.querySelector('.opts').addEventListener('click', function(e){
+        var opt = e.target.closest('.opt');
+        if(!opt) return;
+        this.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('on'); });
+        opt.classList.add('on');
+        state[f.id] = +opt.dataset.i;
+        calc();
+      });
+    }
+  });
+}
+function paintRange(input, f){
+  var pct = (input.value - f.min) / (f.max - f.min) * 100;
+  input.style.setProperty('--fill', pct + '%');
+  var out = document.querySelector('[data-out="' + f.id + '"]');
+  if(out) out.textContent = (f.dec ? (+input.value).toFixed(f.dec) : input.value) + ' ' + f.unit;
+}
+
+/* ---------- расчёт ---------- */
+function values(){
+  var v = {};
+  niche.fields.forEach(function(f){
+    if(f.type === 'range'){ v[f.id] = {n: state[f.id]}; }
+    else {
+      var o = f.options[state[f.id]];
+      v[f.id] = {n: o[0], k: o[1]};
+    }
+  });
+  return v;
+}
+
+function calc(instant){
+  var r = niche.calc(values());
+  var gross = r.base + r.mult + r.adds;
+  var disc = r.discount || 0;
+  var total = Math.round(gross * (1 - disc) / 500) * 500;
+
+  animatePrice(total, instant);
+
+  var sum = Math.max(gross, 1);
+  $('bar1').style.width = (r.base / sum * 100) + '%';
+  $('bar2').style.width = (Math.max(r.mult, 0) / sum * 100) + '%';
+  $('bar3').style.width = (r.adds / sum * 100) + '%';
+
+  var save = $('save');
+  if(disc){
+    save.hidden = false;
+    save.textContent = 'Экономия ' + fmt(gross - total) + ' против розницы';
+  } else { save.hidden = true; }
+
+  var html = '';
+  r.rows.forEach(function(row){
+    html += '<div class="row"><span>' + row[0] + '</span><b>' + row[1] + '</b></div>';
+  });
+  $('rows').innerHTML = html;
+
+  last = {'Раздел': niche.title};
+  r.rows.forEach(function(row){ last[row[0]] = row[1]; });
+  last['Расчёт'] = fmt(total);
+}
+
+function animatePrice(target, instant){
+  if(priceRaf) cancelAnimationFrame(priceRaf);
+  if(instant){ shownPrice = target; $('price').textContent = fmt(target); return; }
+  var from = shownPrice, start = null, dur = 340;
+  function step(ts){
+    if(!start) start = ts;
+    var p = Math.min((ts - start) / dur, 1);
+    var eased = 1 - Math.pow(1 - p, 3);
+    shownPrice = from + (target - from) * eased;
+    $('price').textContent = fmt(shownPrice);
+    if(p < 1) priceRaf = requestAnimationFrame(step);
+    else shownPrice = target;
+  }
+  priceRaf = requestAnimationFrame(step);
+}
+
+/* ---------- заявка ---------- */
+$('send').addEventListener('click', function(){
+  var name = $('cName').value.trim();
+  var phone = $('cPhone').value.trim();
   if(!name || !phone){ alert('Заполните имя и телефон'); return; }
-  // Ловушка сработала — показываем успех, но письмо не шлём.
-  if(document.getElementById('cCompany').value){
-    document.getElementById('ok').style.display = 'block';
-    return;
-  }
+  if($('cTrap').value){ $('ok').style.display = 'block'; return; }   // ловушка для ботов
 
   var btn = this;
-  var ok = document.getElementById('ok');
-  var err = document.getElementById('err');
-  err.style.display = 'none';
+  $('err').style.display = 'none';
   btn.disabled = true;
   btn.textContent = 'Отправляем…';
 
-  var payload = {
-    _subject: 'Заявка с демо-калькулятора',
-    _template: 'table',
-    _captcha: 'false',
-    'Имя': name,
-    'Телефон': phone
-  };
-  Object.keys(last).forEach(function(key){ payload[key] = last[key]; });
+  var payload = {_subject:'Заявка с демо-калькулятора', _template:'table', _captcha:'false',
+                 'Имя':name, 'Телефон':phone};
+  Object.keys(last).forEach(function(k){ payload[k] = last[k]; });
 
   fetch(FORM_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(payload)
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify(payload)
   })
   .then(function(r){ return r.json().catch(function(){ return {}; }); })
-  .then(function(data){
-    if(data && (data.success === 'true' || data.success === true)){
-      ok.style.display = 'block';
+  .then(function(d){
+    if(d && (d.success === 'true' || d.success === true)){
+      $('ok').style.display = 'block';
       btn.textContent = 'Заявка отправлена';
-    } else {
-      throw new Error('send failed');
-    }
+    } else { throw new Error('failed'); }
   })
   .catch(function(){
-    err.style.display = 'block';
+    $('err').style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Вызвать замерщика';
+    btn.textContent = 'Отправить заявку с расчётом';
   });
 });
 
-calc();
+/* ---------- старт ---------- */
+renderNiches();
+renderFields();
+calc(true);
+movePill();
+window.addEventListener('resize', movePill);
 </script>
 </body>
 </html>
